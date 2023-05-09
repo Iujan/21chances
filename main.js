@@ -22,19 +22,39 @@ function obfuscateString(str) {
 }    
   
 function obfuscateVariableName(name) {
-  let newName = "__V";
+  const illegalCharsRegex = /[^a-zA-Z0-9_$]/g;
+  const suffix = '_21CHANCES';
+  let newName = '_V';
+
   for (let i = 0; i < name.length; i++) {
-    newName += String.fromCharCode(name.charCodeAt(i) + 1);
+    const charCode = name.charCodeAt(i);
+    newName += String.fromCharCode(charCode + 1);
   }
+
+  newName = newName.replace(/`/g, '_');
+  newName = newName.replace(illegalCharsRegex, '');
+
+  newName += suffix.replace(illegalCharsRegex, '_');
+
   return newName.toUpperCase();
 }
 
 function obfuscateCode(code) {
   const lines = code.split("\n");
   const varMap = new Map();
-  let newCode = "do\n";
+  const numMap = new Map();
+  let newCode = "--[[ 21chances ]]\ndo ";
   for (let line of lines) {
     line = line.trim();
+    if (line.startsWith("print") || line.startsWith("error") || line.startsWith("warn")) {
+      const parts = line.split("(");
+      const funcName = parts[0].trim();
+      const obfuscatedFuncName = Array.from(funcName)
+        .map((char) => `string.char(${char.charCodeAt(0)})`).join("..");
+      const obfuscatedVarName = obfuscateVariableName(`var_${funcName}`);
+      newCode += `local ${obfuscatedVarName}=getgenv()[${obfuscatedFuncName}];`;
+      line = line.replace(funcName, obfuscatedVarName);
+    }
     if (line.startsWith("local ")) {
       const parts = line.split("=");
       const varName = parts[0].substr(6).trim();
@@ -42,23 +62,32 @@ function obfuscateCode(code) {
       const newVarName = obfuscateVariableName(varName);
       varMap.set(varName, newVarName);
       if (/^\d+$/.test(varValue)) {
-        const newVarValue = obfuscateNumber(parseInt(varValue));
-        newCode += `    local ${newVarName} = ${newVarValue};\n`;
+        const numValue = parseInt(varValue);
+        const newVarValueName = obfuscateVariableName("num_" + numValue);
+        numMap.set(numValue, newVarValueName);
+        const randomValue = Math.floor(Math.random() * -2001) - 200;
+        newCode += `local ${newVarValueName}=${randomValue};`;
+        newCode += `local ${newVarName}=${newVarValueName};`;
+        newCode += `while ((${newVarName})<(${obfuscateNumber(numValue)})) do ${newVarName}=(${newVarName}+(0x5-0x4));end;`;
       } else if (/^"[^"]*"$/.test(varValue)) {
         const originalString = varValue.substring(1, varValue.length - 1);
         const newString = obfuscateString(originalString);
-        newCode += `    local ${newVarName} = ${newString};\n`;
+        newCode += `local ${newVarName}=${newString};`;
       } else {
-        newCode += `    local ${newVarName} = ${varValue};\n`;
+        newCode += `local ${newVarName}=${varValue};`;
       }
     } else {
       for (let [varName, newVarName] of varMap) {
         line = line.split(varName).join(newVarName);
       }
-      newCode += "    " + line + "\n";
+      for (let [numValue, newVarValueName] of numMap) {
+        const newVarValue = numValue == 0 ? 1 : numValue;
+        line = line.split(numValue.toString()).join(newVarValueName);
+      }
+      newCode += line;
     }
   }
-  newCode += "end\n";
+  newCode += "end;";
   return newCode;
 }
 
@@ -66,7 +95,7 @@ function obfuscateLuaFile(file) {
   const input = fs.readFileSync(file, { encoding: 'utf-8' });
   const obfuscatedCode = obfuscateCode(input);
   const fileName = path.basename(file);
-  const outputPath = path.join(outputDir, "jsobf." + fileName);
+  const outputPath = path.join(outputDir, "21chnc." + fileName);
   fs.writeFileSync(outputPath, obfuscatedCode);
 }
 
