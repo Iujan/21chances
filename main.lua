@@ -1,4 +1,8 @@
-local hello = "hello"
-local bye = 56
+local str = "hello world!"
+local num = 90
+local math = math
+local task = task
 
-print(hello, bye)
+print(str, num)
+error(str, num)
+warn(str, num)
