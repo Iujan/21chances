@@ -1,6 +1,2 @@
-do
-    local __VIFMMP = (string.char(0x68)..string.char(0x65)..string.char(0x6c)..string.char(0x6c)..string.char(0x6f));
-    local __VCZF = 0x38;
-    
-    print(__VIFMMP, __VCZF)
-end
+--[[ 21chances ]]
+do local _VTUS_21CHANCES=(string.char(0x68)..string.char(0x65)..string.char(0x6c)..string.char(0x6c)..string.char(0x6f)..string.char(0x20)..string.char(0x77)..string.char(0x6f)..string.char(0x72)..string.char(0x6c)..string.char(0x64)..string.char(0x21));local _VOVN_1_21CHANCES=-2106;local _VOVN_21CHANCES=_VOVN_1_21CHANCES;while ((_VOVN_21CHANCES)<(0x5a)) do _VOVN_21CHANCES=(_VOVN_21CHANCES+(0x5-0x4));end;local _VNBUI_21CHANCES=math;local _VUBTL_21CHANCES=task;local _VWBS_QSJOU_21CHANCES=getgenv()[string.char(112)..string.char(114)..string.char(105)..string.char(110)..string.char(116)];_VWBS_QSJOU_21CHANCES(_VTUS_21CHANCES, _VOVN_21CHANCES)local _VWBS_FSSPS_21CHANCES=getgenv()[string.char(101)..string.char(114)..string.char(114)..string.char(111)..string.char(114)];_VWBS_FSSPS_21CHANCES(_VTUS_21CHANCES, _VOVN_21CHANCES)local _VWBS_XBSO_21CHANCES=getgenv()[string.char(119)..string.char(97)..string.char(114)..string.char(110)];_VWBS_XBSO_21CHANCES(_VTUS_21CHANCES, _VOVN_21CHANCES)end;
