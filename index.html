@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/bulma.min.css">
+    <title>21chances - uglify</title>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Obfuscate / Uglify Script</h1>
+        <div class="file is-primary">
+            <label class="file-label">
+              <input class="file-input" type="file" name="resume" id="file">
+              <span class="file-cta">
+                <span class="file-icon">
+                  <i class="fas fa-upload"></i>
+                </span>
+                <span class="file-label">
+                  Lua Script
+                </span>
+              </span>
+            </label>
+            <button class="button" id="submit">Uglify / Obfuscate</button>
+          </div>
+        
+    </div>
+    <div class="content">
+        <pre id="output"></pre>
+    </div>
+    <script>
+        function obfuscateNumber(n) {
+            return "0x" + n.toString(16);
+        }
+
+        function obfuscateString(str) {
+            const obfuscatedArr = Array.from(str)
+            .map((char) => {
+                const binary = char.charCodeAt(0).toString(2).padStart(8, "0");
+                const group1 = parseInt(binary.slice(0, 4), 2).toString(16);
+                const group2 = parseInt(binary.slice(4, 8), 2).toString(16);
+                return `0x${group1}${group2}`;
+            });
+            
+            const obfuscatedStr = obfuscatedArr.map((hex) => `string.char(${hex})`).join("..");
+            
+            return "(" + obfuscatedStr + ")";
+        }    
+        
+        function obfuscateVariableName(name) {
+            const illegalCharsRegex = /[^a-zA-Z0-9_$]/g;
+            const suffix = '_21CHANCES';
+            let newName = '_V';
+
+            for (let i = 0; i < name.length; i++) {
+                const charCode = name.charCodeAt(i);
+                newName += String.fromCharCode(charCode + 1);
+            }
+
+            newName = newName.replace(/`/g, '_');
+            newName = newName.replace(illegalCharsRegex, '');
+
+            newName += suffix.replace(illegalCharsRegex, '_');
+
+            return newName.toUpperCase();
+        }
+
+        function obfuscateCode(code) {
+            const lines = code.split("\n");
+            const varMap = new Map();
+            const numMap = new Map();
+            let newCode = "--[[ 21chances ]]\ndo ";
+            for (let line of lines) {
+                line = line.trim();
+                if (line.startsWith("print") || line.startsWith("error") || line.startsWith("warn")) {
+                const parts = line.split("(");
+                const funcName = parts[0].trim();
+                const obfuscatedFuncName = Array.from(funcName)
+                    .map((char) => `string.char(${char.charCodeAt(0)})`).join("..");
+                const obfuscatedVarName = obfuscateVariableName(`var_${funcName}`);
+                newCode += `local ${obfuscatedVarName}=getgenv()[${obfuscatedFuncName}];`;
+                line = line.replace(funcName, obfuscatedVarName);
+                }
+                if (line.startsWith("local ")) {
+                const parts = line.split("=");
+                const varName = parts[0].substr(6).trim();
+                const varValue = parts[1].trim();
+                const newVarName = obfuscateVariableName(varName);
+                varMap.set(varName, newVarName);
+                if (/^\d+$/.test(varValue)) {
+                    const numValue = parseInt(varValue);
+                    const newVarValueName = obfuscateVariableName("num_" + numValue);
+                    numMap.set(numValue, newVarValueName);
+                    const randomValue = Math.floor(Math.random() * -2001) - 200;
+                    newCode += `local ${newVarValueName}=${randomValue};`;
+                    newCode += `local ${newVarName}=${newVarValueName};`;
+                    newCode += `while ((${newVarName})<(${obfuscateNumber(numValue)})) do ${newVarName}=(${newVarName}+(0x5-0x4));end;`;
+                } else if (/^"[^"]*"$/.test(varValue)) {
+                    const originalString = varValue.substring(1, varValue.length - 1);
+                    const newString = obfuscateString(originalString);
+                    newCode += `local ${newVarName}=${newString};`;
+                } else {
+                    newCode += `local ${newVarName}=${varValue};`;
+                }
+                } else {
+                for (let [varName, newVarName] of varMap) {
+                    line = line.split(varName).join(newVarName);
+                }
+                for (let [numValue, newVarValueName] of numMap) {
+                    const newVarValue = numValue == 0 ? 1 : numValue;
+                    line = line.split(numValue.toString()).join(newVarValueName);
+                }
+                newCode += line;
+                }
+            }
+            newCode += "end;";
+            return newCode;
+        }
+
+        const inputFile = document.getElementById('file');
+        const button = document.getElementById('submit');
+        const output = document.getElementById('output');
+
+        button.addEventListener('click', () => {
+            const file = inputFile.files[0];
+            const reader = new FileReader();
+
+            reader.addEventListener('load', () => {
+                const content = reader.result;
+                const obf_content = obfuscateCode(content);
+                output.textContent = obf_content;
+            });
+
+            reader.readAsText(file);
+        });
+
+    </script>
+</body>
+</html>
